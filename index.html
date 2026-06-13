@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NTE Matchmaker — Tester Panel</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --void: #090e1a;
+            --panel: #0d1424;
+            --panel-mid: #111a2e;
+            --border: #1e2d4a;
+            --amber: #f5a623;
+            --amber-dim: #7a5110;
+            --teal: #2de8b0;
+            --teal-dim: #0d5c44;
+            --red: #ff4757;
+            --red-dim: #5c1a22;
+            --red-glow: rgba(255, 71, 87, 0.18);
+            --violet: #a78bfa;
+            --muted: #4a6080;
+            --text: #c8d8f0;
+            --mono: 'Share Tech Mono', monospace;
+            --sans: 'Inter', system-ui, sans-serif;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--void);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 14px;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        /* ── Root grid: topbar / [sidebar | event-log | chat-room] ────────────── */
+        .app {
+            display: grid;
+            grid-template-rows: 52px 1fr;
+            grid-template-columns: 300px 1fr 340px;
+            height: 100vh;
+        }
+
+        /* ── Top bar ─────────────────────────────────────────────────────────── */
+        .topbar {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 20px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-logo {
+            font-family: var(--mono);
+            font-size: 15px;
+            color: var(--amber);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+            .topbar-logo span {
+                color: var(--muted);
+            }
+
+        .topbar-badges {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono);
+            padding: 3px 9px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            transition: border-color 0.3s, color 0.3s;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .badge.online .badge-dot {
+            background: var(--teal);
+            box-shadow: 0 0 5px var(--teal);
+        }
+
+        .badge.queue .badge-dot {
+            background: var(--amber);
+            box-shadow: 0 0 5px var(--amber);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .badge.ingame .badge-dot {
+            background: var(--red);
+            box-shadow: 0 0 5px var(--red);
+        }
+
+        .badge.restricted .badge-dot {
+            background: var(--red);
+            box-shadow: 0 0 8px var(--red);
+            animation: pulse 0.6s ease-in-out infinite;
+        }
+
+        .badge.online {
+            border-color: var(--teal-dim);
+            color: var(--teal);
+        }
+
+        .badge.queue {
+            border-color: var(--amber-dim);
+            color: var(--amber);
+        }
+
+        .badge.restricted {
+            border-color: var(--red-dim);
+            color: var(--red);
+        }
+
+        .ai-badge {
+            font-size: 10px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-family: var(--mono);
+            letter-spacing: 0.06em;
+            background: rgba(167,139,250,0.1);
+            border: 1px solid rgba(167,139,250,0.25);
+            color: var(--violet);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────────────────────── */
+        .sidebar {
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+            .sidebar::-webkit-scrollbar {
+                width: 3px;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+                background: var(--border);
+            }
+
+        .section {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .section-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .field {
+            margin-bottom: 10px;
+        }
+
+            .field:last-child {
+                margin-bottom: 0;
+            }
+
+        label {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            font-family: var(--mono);
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            background: var(--void);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 7px 10px;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        input:focus {
+            border-color: var(--amber);
+        }
+
+        /* MMR bar */
+        .mmr-track {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 7px;
+            overflow: hidden;
+        }
+
+        .mmr-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal-dim), var(--amber));
+            border-radius: 2px;
+            transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+
+            .mmr-fill.pulsing {
+                animation: mmr-pulse 1.4s ease-in-out infinite;
+            }
+
+        @keyframes mmr-pulse {
+            0%,100% {
+                opacity: 1;
+                filter: brightness(1)
+            }
+
+            50% {
+                opacity: 0.6;
+                filter: brightness(1.6)
+            }
+        }
+
+        /* Buttons */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.15s, transform 0.1s, background 0.15s, border-color 0.15s;
+            margin-bottom: 7px;
+        }
+
+            .btn:last-child {
+                margin-bottom: 0;
+            }
+
+            .btn:active:not(:disabled) {
+                transform: scale(0.97);
+            }
+
+            .btn:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .btn-primary {
+            background: var(--amber);
+            color: var(--void);
+            font-weight: 600;
+        }
+
+            .btn-primary:hover:not(:disabled) {
+                opacity: 0.85;
+            }
+
+        .btn-ghost {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+            .btn-ghost:hover:not(:disabled) {
+                border-color: var(--teal);
+                color: var(--teal);
+            }
+
+        .btn-danger {
+            background: transparent;
+            border-color: var(--red-dim);
+            color: var(--red);
+        }
+
+            .btn-danger:hover:not(:disabled) {
+                background: var(--red-dim);
+            }
+
+        .btn-chat {
+            background: var(--teal-dim);
+            color: var(--teal);
+            border-color: var(--teal-dim);
+        }
+
+            .btn-chat:hover:not(:disabled) {
+                background: rgba(45,232,176,0.2);
+            }
+
+        /* Player card */
+        .player-card {
+            display: none;
+            background: var(--void);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 10px 12px;
+        }
+
+            .player-card.visible {
+                display: block;
+            }
+
+        .player-card-name {
+            font-family: var(--mono);
+            font-size: 15px;
+            color: var(--amber);
+            margin-bottom: 3px;
+        }
+
+        .player-card-meta {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+            .player-card-meta span {
+                color: var(--text);
+            }
+
+            .player-card-meta .status-restricted {
+                color: var(--red) !important;
+            }
+
+            .player-card-meta .status-banned {
+                color: var(--red) !important;
+                font-weight: 600;
+            }
+
+        /* Violation bar */
+        .violation-wrap {
+            margin-top: 8px;
+            display: none;
+        }
+
+            .violation-wrap.visible {
+                display: block;
+            }
+
+        .violation-label {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .violation-track {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .violation-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.5s ease, background 0.3s;
+            background: var(--teal);
+        }
+
+        /* Leaderboard */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--mono);
+            font-size: 11px;
+        }
+
+            .leaderboard-table th {
+                text-align: left;
+                color: var(--muted);
+                font-weight: 400;
+                padding: 0 0 7px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .leaderboard-table td {
+                padding: 5px 0;
+                color: var(--text);
+                border-bottom: 1px solid rgba(30,45,74,0.4);
+            }
+
+            .leaderboard-table tr:last-child td {
+                border-bottom: none;
+            }
+
+        .rank-num {
+            color: var(--muted);
+            width: 24px;
+        }
+
+        .rank-mmr {
+            text-align: right;
+            color: var(--amber);
+        }
+
+        .rank-status {
+            text-align: right;
+            font-size: 10px;
+        }
+
+        .st-offline {
+            color: var(--muted);
+        }
+
+        .st-lobby {
+            color: var(--teal);
+        }
+
+        .st-queue {
+            color: var(--amber);
+        }
+
+        .st-ingame {
+            color: var(--red);
+        }
+
+        .st-restricted {
+            color: var(--red);
+        }
+
+        .st-banned {
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        /* ── Centre: Event Log ───────────────────────────────────────────────── */
+        .event-log-area {
+            display: flex;
+            flex-direction: column;
+            background: var(--void);
+            border-right: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .pane-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .pane-title {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.09em;
+        }
+
+        .pane-action-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+            .pane-action-btn:hover {
+                color: var(--text);
+                background: var(--border);
+            }
+
+        .terminal-log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.9;
+            transition: background 0.4s;
+        }
+
+            .terminal-log.alert-flash {
+                background: rgba(255,71,87,0.06);
+            }
+
+            .terminal-log::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .terminal-log::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 2px;
+            }
+
+        .log-line {
+            display: flex;
+            gap: 9px;
+            align-items: baseline;
+            animation: fade-in 0.2s ease;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(3px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .log-ts {
+            color: var(--muted);
+            flex-shrink: 0;
+            font-size: 10px;
+        }
+
+        .log-tag {
+            flex-shrink: 0;
+            padding: 0 5px;
+            border-radius: 2px;
+            font-size: 10px;
+        }
+
+        .log-msg {
+            color: var(--text);
+            word-break: break-all;
+        }
+
+        .tag-info {
+            background: rgba(45,232,176,0.1);
+            color: var(--teal);
+        }
+
+        .tag-warn {
+            background: rgba(245,166,35,0.14);
+            color: var(--amber);
+        }
+
+        .tag-error {
+            background: rgba(255,71,87,0.14);
+            color: var(--red);
+        }
+
+        .tag-match {
+            background: rgba(245,166,35,0.22);
+            color: var(--amber);
+        }
+
+        .tag-system {
+            background: rgba(74,96,128,0.18);
+            color: var(--muted);
+        }
+
+        .tag-event {
+            background: rgba(45,232,176,0.07);
+            color: var(--teal);
+        }
+
+        .tag-ai {
+            background: rgba(167,139,250,0.15);
+            color: var(--violet);
+        }
+
+        .tag-violated {
+            background: rgba(255,71,87,0.22);
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        /* MATCH_FOUND banner */
+        .match-banner {
+            margin: 5px 0;
+            padding: 9px 12px;
+            background: linear-gradient(90deg, rgba(245,166,35,0.13), rgba(45,232,176,0.06));
+            border-left: 3px solid var(--amber);
+            border-radius: 0 4px 4px 0;
+            animation: banner-in 0.35s cubic-bezier(0.2,0,0,1);
+        }
+
+        @keyframes banner-in {
+            from {
+                opacity: 0;
+                transform: translateX(-10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        .match-banner-title {
+            font-size: 11px;
+            color: var(--amber);
+            margin-bottom: 3px;
+            letter-spacing: 0.07em;
+        }
+
+        .match-banner-id {
+            font-size: 10px;
+            color: var(--teal);
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .match-banner-players {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .match-player-chip {
+            background: var(--border);
+            color: var(--text);
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        /* VIOLATION alert banner */
+        .violation-banner {
+            margin: 5px 0;
+            padding: 10px 12px;
+            background: rgba(255,71,87,0.1);
+            border: 1px solid rgba(255,71,87,0.35);
+            border-left: 3px solid var(--red);
+            border-radius: 0 4px 4px 0;
+            animation: banner-in 0.3s cubic-bezier(0.2,0,0,1);
+        }
+
+        .violation-banner-title {
+            font-size: 11px;
+            color: var(--red);
+            margin-bottom: 4px;
+            letter-spacing: 0.07em;
+        }
+
+        .violation-banner-score {
+            font-size: 12px;
+            color: var(--red);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .violation-terms {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .term-chip {
+            background: rgba(255,71,87,0.18);
+            color: var(--red);
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,71,87,0.3);
+        }
+
+        .empty-log {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+            font-size: 11px;
+            font-family: var(--mono);
+            text-align: center;
+            line-height: 2.2;
+        }
+
+        /* ── Right: Chat Room ────────────────────────────────────────────────── */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            background: var(--void);
+            overflow: hidden;
+            transition: background 0.4s;
+        }
+
+            .chat-area.lockdown {
+                background: rgba(255,71,87,0.04);
+            }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+            .chat-messages::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .chat-messages::-webkit-scrollbar-thumb {
+                background: var(--border);
+            }
+
+        .chat-msg {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            padding: 3px 0;
+            animation: msg-in 0.18s ease;
+            border-radius: 3px;
+        }
+
+        @keyframes msg-in {
+            from {
+                opacity: 0;
+                transform: translateY(2px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .chat-msg-ts {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .chat-msg-user {
+            font-family: var(--mono);
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+            .chat-msg-user.self {
+                color: var(--amber);
+            }
+
+            .chat-msg-user.other {
+                color: var(--teal);
+            }
+
+            .chat-msg-user.system {
+                color: var(--violet);
+            }
+
+        .chat-msg-text {
+            font-size: 13px;
+            color: var(--text);
+            word-break: break-word;
+        }
+
+        /* Blocked message placeholder */
+        .chat-msg.blocked {
+            background: rgba(255,71,87,0.08);
+            border-left: 2px solid var(--red);
+            padding-left: 8px;
+            border-radius: 0 3px 3px 0;
+        }
+
+            .chat-msg.blocked .chat-msg-text {
+                color: var(--red);
+                font-style: italic;
+            }
+
+        /* System / moderation messages */
+        .chat-msg.mod-notice {
+            background: rgba(167,139,250,0.06);
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+            .chat-msg.mod-notice .chat-msg-text {
+                color: var(--violet);
+                font-style: italic;
+                font-size: 11px;
+            }
+
+        /* ── Chat input bar ──────────────────────────────────────────────────── */
+        .chat-input-bar {
+            padding: 10px 12px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+
+            .chat-input-bar.locked {
+                background: var(--red-dim);
+            }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #chatInput {
+            flex: 1;
+            background: var(--void);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 7px 10px;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+            #chatInput:focus {
+                border-color: var(--teal);
+            }
+
+            #chatInput:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+            }
+
+            #chatInput.locked-input {
+                border-color: var(--red);
+                background: rgba(255,71,87,0.05);
+            }
+
+        #btnSendChat {
+            padding: 7px 14px;
+            background: var(--teal-dim);
+            border: 1px solid var(--teal-dim);
+            color: var(--teal);
+            font-family: var(--mono);
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.15s, opacity 0.15s;
+        }
+
+            #btnSendChat:hover:not(:disabled) {
+                background: rgba(45,232,176,0.2);
+            }
+
+            #btnSendChat:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+
+            #btnSendChat.locked {
+                background: var(--red-dim);
+                border-color: var(--red-dim);
+                color: var(--red);
+            }
+
+        .chat-status-msg {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 5px;
+            min-height: 14px;
+            transition: color 0.2s;
+        }
+
+            .chat-status-msg.warning {
+                color: var(--red);
+            }
+
+        /* Lockdown overlay in chat */
+        .lockdown-notice {
+            display: none;
+            background: rgba(255,71,87,0.12);
+            border: 1px solid rgba(255,71,87,0.4);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--red);
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+            animation: banner-in 0.3s ease;
+        }
+
+            .lockdown-notice.visible {
+                display: block;
+            }
+    </style>
+</head>
+<body>
+    <div class="app">
+
+        <!-- ── Top bar ──────────────────────────────────────────────────────────── -->
+        <header class="topbar">
+            <div class="topbar-logo">NTE <span>//</span> Matchmaker</div>
+            <div class="topbar-badges">
+                <span class="ai-badge">⬡ AI SAFETY FILTER ACTIVE</span>
+                <div class="badge" id="connBadge">
+                    <div class="badge-dot"></div>
+                    <span id="connLabel">DISCONNECTED</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+        <aside class="sidebar">
+
+            <div class="section">
+                <div class="section-label">Authentication</div>
+                <div class="field">
+                    <label for="inputUsername">Username</label>
+                    <input id="inputUsername" type="text" placeholder="e.g. NightBlade" maxlength="32" />
+                </div>
+                <div class="field">
+                    <label for="inputMmr">MMR &nbsp;<span id="mmrDisplay" style="color:var(--amber)">1000</span></label>
+                    <input id="inputMmr" type="number" min="0" max="9999" value="1000" />
+                    <div class="mmr-track"><div class="mmr-fill" id="mmrFill" style="width:10%"></div></div>
+                </div>
+                <button class="btn btn-primary" id="btnLogin">Login &amp; Connect</button>
+            </div>
+
+            <div class="section">
+                <div class="section-label">Session</div>
+                <div class="player-card" id="playerCard">
+                    <div class="player-card-name" id="cardName">—</div>
+                    <div class="player-card-meta">
+                        MMR <span id="cardMmr">—</span> &nbsp;·&nbsp; Status <span id="cardStatus">—</span>
+                    </div>
+                    <div class="violation-wrap" id="violationWrap">
+                        <div class="violation-label">
+                            <span>VIOLATION SCORE</span>
+                            <span id="violationPct">0</span>
+                        </div>
+                        <div class="violation-track">
+                            <div class="violation-fill" id="violationFill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-label">Lobby Actions</div>
+                <button class="btn btn-ghost" id="btnQueue" disabled>Enter Queue</button>
+                <button class="btn btn-danger" id="btnLeave" disabled>Leave Queue</button>
+            </div>
+
+            <div class="section" style="flex:1">
+                <div class="section-label">
+                    Leaderboard
+                    <button onclick="loadLeaderboard()" style="float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;font-family:var(--mono);padding:0;">↺ refresh</button>
+                </div>
+                <table class="leaderboard-table">
+                    <thead><tr><th>#</th><th>Player</th><th class="rank-mmr">MMR</th><th class="rank-status">St.</th></tr></thead>
+                    <tbody id="leaderboardBody">
+                        <tr><td colspan="4" style="color:var(--muted);font-family:var(--mono);font-size:11px;padding:8px 0">Click refresh to load</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </aside>
+
+        <!-- ── Centre: Event Log ────────────────────────────────────────────────── -->
+        <div class="event-log-area">
+            <div class="pane-header">
+                <div class="pane-title">EVENT LOG &nbsp;//&nbsp; SYSTEM TERMINAL</div>
+                <button class="pane-action-btn" onclick="clearLog()">clear</button>
+            </div>
+            <div class="terminal-log" id="terminalLog">
+                <div class="empty-log">No events yet.<br>Login and connect to begin.</div>
+            </div>
+        </div>
+
+        <!-- ── Right: Chat Room ─────────────────────────────────────────────────── -->
+        <div class="chat-area" id="chatArea">
+            <div class="pane-header">
+                <div class="pane-title">LOBBY CHAT &nbsp;//&nbsp; AI MONITORED</div>
+                <span style="font-family:var(--mono);font-size:10px;color:var(--violet);margin-left:auto;">⬡ FILTER ON</span>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-log" id="chatEmpty">Connect to the lobby<br>to join the chat.</div>
+            </div>
+
+            <div class="chat-input-bar" id="chatInputBar">
+                <div class="lockdown-notice" id="lockdownNotice">
+                    ⛔ CHAT RESTRICTED — AI violation detected. Queue access suspended.
+                </div>
+                <div class="chat-input-row">
+                    <input id="chatInput" type="text" placeholder="Type a message… (try 'aimbot' to test AI filter)" maxlength="300" disabled />
+                    <button id="btnSendChat" disabled>Send</button>
+                </div>
+                <div class="chat-status-msg" id="chatStatusMsg">Connect to enable chat.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CLIENT STATE
+        ═══════════════════════════════════════════════════════════════════════════ */
+        let ws = null;
+        let session = null;    // { token, player }
+        let logEmpty = true;
+        let chatEmpty = true;
+        let isRestricted = false;
+        let violationScore = 0;
+
+        const API = `${location.protocol}//${location.hostname}:3000`;
+        const WS = `ws://${location.hostname}:3000`;
+
+        const $ = id => document.getElementById(id);
+        const termLog = $('terminalLog');
+        const chatMsgs = $('chatMessages');
+        const connBadge = $('connBadge');
+        const connLabel = $('connLabel');
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           MMR BAR
+        ═══════════════════════════════════════════════════════════════════════════ */
+        $('inputMmr').addEventListener('input', () => {
+            const v = Math.max(0, Math.min(9999, Number($('inputMmr').value) || 0));
+            $('mmrDisplay').textContent = v;
+            $('mmrFill').style.width = `${Math.round((v / 9999) * 100)}%`;
+        });
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           TIMESTAMP
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function ts() {
+            return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           EVENT LOG
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function log(msg, type = 'info') {
+            if (logEmpty) { termLog.innerHTML = ''; logEmpty = false; }
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML =
+                `<span class="log-ts">${ts()}</span>` +
+                `<span class="log-tag tag-${type}">${type.toUpperCase()}</span>` +
+                `<span class="log-msg">${escHtml(msg)}</span>`;
+            termLog.appendChild(line);
+            termLog.scrollTop = termLog.scrollHeight;
+        }
+
+        function logMatchBanner(data) {
+            if (logEmpty) { termLog.innerHTML = ''; logEmpty = false; }
+            const banner = document.createElement('div');
+            banner.className = 'match-banner';
+            const chips = data.players.map(p =>
+                `<span class="match-player-chip">${escHtml(p.username)} <span style="color:var(--amber)">${p.mmr}</span></span>`
+            ).join('');
+            banner.innerHTML =
+                `<div class="match-banner-title">⚡ MATCH FOUND</div>` +
+                `<div class="match-banner-id">${escHtml(data.matchId)}</div>` +
+                `<div class="match-banner-players">${chips}</div>`;
+            termLog.appendChild(banner);
+            termLog.scrollTop = termLog.scrollHeight;
+        }
+
+        function logViolationBanner(data) {
+            if (logEmpty) { termLog.innerHTML = ''; logEmpty = false; }
+            const banner = document.createElement('div');
+            banner.className = 'violation-banner';
+            const chips = (data.triggeredTerms || []).map(t =>
+                `<span class="term-chip">${escHtml(t)}</span>`
+            ).join('');
+            banner.innerHTML =
+                `<div class="violation-banner-title">⛔ AI SAFETY FILTER — VIOLATION DETECTED</div>` +
+                `<div class="violation-banner-score">Score: ${data.violationScore}/100 &nbsp;·&nbsp; Status: ${escHtml(data.newStatus?.toUpperCase() ?? 'RESTRICTED')}</div>` +
+                `<div class="violation-terms">${chips || '<span style="color:var(--muted);font-size:10px">no explicit terms captured</span>'}</div>`;
+            termLog.appendChild(banner);
+            termLog.scrollTop = termLog.scrollHeight;
+        }
+
+        function clearLog() {
+            termLog.innerHTML = '<div class="empty-log">Log cleared.</div>';
+            logEmpty = false;
+        }
+
+        function flashTerminalRed() {
+            termLog.classList.add('alert-flash');
+            setTimeout(() => termLog.classList.remove('alert-flash'), 2500);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CHAT ROOM
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function appendChat(username, message, variant = 'other') {
+            if (chatEmpty) { chatMsgs.innerHTML = ''; chatEmpty = false; }
+            const row = document.createElement('div');
+            row.className = `chat-msg ${variant === 'blocked' ? 'blocked' : variant === 'system' ? 'mod-notice' : ''}`;
+            const userClass = variant === 'self' ? 'self' : variant === 'system' ? 'system' : 'other';
+            row.innerHTML =
+                `<span class="chat-msg-ts">${ts()}</span>` +
+                `<span class="chat-msg-user ${userClass}">${escHtml(username)}</span>` +
+                `<span class="chat-msg-text">${escHtml(message)}</span>`;
+            chatMsgs.appendChild(row);
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+        }
+
+        function activateChatLockdown(reason) {
+            isRestricted = true;
+            $('chatArea').classList.add('lockdown');
+            $('chatInputBar').classList.add('locked');
+            $('chatInput').classList.add('locked-input');
+            $('chatInput').disabled = true;
+            $('chatInput').placeholder = 'Chat restricted — AI violation detected';
+            $('btnSendChat').disabled = true;
+            $('btnSendChat').classList.add('locked');
+            $('lockdownNotice').classList.add('visible');
+            $('btnQueue').disabled = true;
+            $('mmrFill').classList.remove('pulsing');
+            $('chatStatusMsg').textContent = reason ?? 'Access restricted.';
+            $('chatStatusMsg').classList.add('warning');
+            flashTerminalRed();
+        }
+
+        function setChatStatus(msg, warn = false) {
+            $('chatStatusMsg').textContent = msg;
+            $('chatStatusMsg').className = `chat-status-msg${warn ? ' warning' : ''}`;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           VIOLATION SCORE BAR
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function updateViolationBar(score) {
+            violationScore = Math.max(violationScore, score);
+            const pct = Math.min(100, violationScore);
+            $('violationWrap').classList.add('visible');
+            $('violationFill').style.width = `${pct}%`;
+            $('violationFill').style.background =
+                pct >= 80 ? 'var(--red)' :
+                    pct >= 40 ? 'var(--amber)' : 'var(--teal)';
+            $('violationPct').textContent = `${pct}/100`;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CONNECTION STATUS
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function setBadge(state) {
+            connBadge.className = `badge ${state}`;
+            const labels = { '': 'DISCONNECTED', online: 'CONNECTED', queue: 'IN QUEUE', ingame: 'IN MATCH', restricted: 'RESTRICTED' };
+            connLabel.textContent = labels[state] ?? state.toUpperCase();
+        }
+
+        function updateCard(player) {
+            $('playerCard').classList.add('visible');
+            $('cardName').textContent = player.username;
+            $('cardMmr').textContent = player.mmr;
+            const statusEl = $('cardStatus');
+            statusEl.textContent = player.status;
+            statusEl.className = (player.status === 'restricted' || player.status === 'banned')
+                ? `status-${player.status}` : '';
+        }
+
+        function updateCardStatus(status) {
+            $('cardStatus').textContent = status;
+            $('cardStatus').className = (status === 'restricted' || status === 'banned')
+                ? `status-${status}` : '';
+            if (session) session.player.status = status;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           LOGIN
+        ═══════════════════════════════════════════════════════════════════════════ */
+        $('btnLogin').addEventListener('click', async () => {
+            const username = $('inputUsername').value.trim();
+            const mmr = Number($('inputMmr').value) || 1000;
+
+            if (username.length < 2) { log('Username must be at least 2 characters.', 'error'); return; }
+
+            $('btnLogin').disabled = true;
+            log(`POST /api/auth/login  username="${username}"  mmr=${mmr}`, 'system');
+
+            try {
+                const res = await fetch(`${API}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, mmr }),
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.ok) {
+                    log(`Login failed: ${data.error ?? 'Unknown error'}`, 'error');
+                    $('btnLogin').disabled = false;
+                    return;
+                }
+
+                session = { token: data.token, player: data.player };
+                log(`Authenticated as "${data.player.username}"  MMR=${data.player.mmr}`, 'info');
+                log(`Token issued: ${data.token.slice(0, 30)}…`, 'system');
+                updateCard(data.player);
+                openWebSocket();
+
+            } catch (err) {
+                log(`Network error: ${err.message}`, 'error');
+                $('btnLogin').disabled = false;
+            }
+        });
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           WEBSOCKET
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function openWebSocket() {
+            if (ws) ws.close();
+            ws = new WebSocket(WS);
+            log(`Opening WebSocket → ${WS}`, 'system');
+
+            ws.addEventListener('open', () => {
+                log('WebSocket connection established.', 'info');
+                setBadge('online');
+                send({ action: 'JOIN_LOBBY', token: session.token });
+            });
+
+            ws.addEventListener('message', evt => {
+                let data;
+                try { data = JSON.parse(evt.data); }
+                catch { log(`Raw: ${evt.data}`, 'system'); return; }
+                handlePacket(data);
+            });
+
+            ws.addEventListener('close', evt => {
+                log(`WebSocket closed  code=${evt.code}  reason="${evt.reason || '—'}"`, 'warn');
+                setBadge('');
+                $('btnQueue').disabled = true;
+                $('btnLeave').disabled = true;
+                $('btnLogin').disabled = false;
+                $('chatInput').disabled = true;
+                $('btnSendChat').disabled = true;
+                setChatStatus('Disconnected.');
+                ws = null;
+            });
+
+            ws.addEventListener('error', () => {
+                log('WebSocket error — check that server.js is running.', 'error');
+            });
+        }
+
+        function send(payload) {
+            if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload));
+            else log('Cannot send — socket not open.', 'warn');
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           PACKET DISPATCHER
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function handlePacket(data) {
+            const ev = data.event ?? 'UNKNOWN';
+
+            switch (ev) {
+
+                case 'CONNECTED':
+                    log(data.message, 'system');
+                    break;
+
+                case 'LOBBY_JOINED':
+                    log(data.message, 'info');
+                    setBadge('online');
+                    updateCard(data.player);
+                    $('btnQueue').disabled = false;
+                    $('chatInput').disabled = false;
+                    $('btnSendChat').disabled = false;
+                    setChatStatus(`Chatting as ${data.player.username} — AI filter active.`);
+                    appendChat('SYSTEM', `${data.player.username} joined the lobby.`, 'system');
+                    break;
+
+                case 'QUEUE_ENTERED':
+                    log(`${data.message}  (queue size: ${data.queueSize})`, 'info');
+                    setBadge('queue');
+                    $('btnQueue').disabled = true;
+                    $('btnLeave').disabled = false;
+                    $('mmrFill').classList.add('pulsing');
+                    updateCardStatus('queue');
+                    break;
+
+                case 'QUEUE_LEFT':
+                    log(data.message, 'info');
+                    setBadge('online');
+                    $('btnQueue').disabled = isRestricted;
+                    $('btnLeave').disabled = true;
+                    $('mmrFill').classList.remove('pulsing');
+                    updateCardStatus('lobby');
+                    break;
+
+                case 'QUEUE_BLOCKED':
+                    log(`Queue blocked: ${data.message}`, 'warn');
+                    activateChatLockdown(data.message);
+                    break;
+
+                case 'MATCH_FOUND':
+                    log(`MATCH FOUND  id=${data.matchId}  avgMmr=${data.avgMmr}`, 'match');
+                    logMatchBanner(data);
+                    setBadge('ingame');
+                    $('btnQueue').disabled = true;
+                    $('btnLeave').disabled = true;
+                    $('mmrFill').classList.remove('pulsing');
+                    updateCardStatus('ingame');
+                    break;
+
+                case 'LOBBY_CHAT': {
+                    const isSelf = session && data.username === session.player.username;
+                    log(`CHAT  ${data.username}: "${data.message}"  (AI ${data.processingMs}ms ✓)`, 'info');
+                    appendChat(data.username, data.message, isSelf ? 'self' : 'other');
+                    break;
+                }
+
+                case 'SYSTEM_WARNING':
+                    // AI filter flagged THIS player's message.
+                    log(`AI SAFETY FILTER — VIOLATION DETECTED`, 'ai');
+                    log(`Score: ${data.violationScore}/100  Status: ${data.newStatus?.toUpperCase()}`, 'violated');
+                    log(`Terms: [${(data.triggeredTerms || []).join(', ')}]`, 'violated');
+                    log(`Pipeline time: ${data.processingMs}ms`, 'ai');
+                    logViolationBanner(data);
+                    updateViolationBar(data.violationScore);
+                    updateCardStatus(data.newStatus ?? 'restricted');
+                    setBadge('restricted');
+                    activateChatLockdown(data.message);
+                    appendChat('⛔ AI-SYSTEM', data.message, 'blocked');
+                    break;
+
+                case 'MODERATION_ACTION':
+                    // Another player in the lobby was actioned.
+                    log(`MOD ACTION: ${data.message}`, 'warn');
+                    appendChat('⬡ MOD', data.message, 'system');
+                    break;
+
+                case 'NOTICE':
+                    log(data.message, 'warn');
+                    break;
+
+                case 'AUTH_FAIL':
+                    log(`Auth failure: ${data.message}`, 'error');
+                    break;
+
+                case 'ERROR':
+                    log(`Server error: ${data.message}`, 'error');
+                    break;
+
+                default:
+                    log(`[${ev}] ${JSON.stringify(data)}`, 'event');
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           QUEUE BUTTONS
+        ═══════════════════════════════════════════════════════════════════════════ */
+        $('btnQueue').addEventListener('click', () => {
+            log('→ ENTER_QUEUE', 'system');
+            send({ action: 'ENTER_QUEUE' });
+        });
+        $('btnLeave').addEventListener('click', () => {
+            log('→ LEAVE_QUEUE', 'system');
+            send({ action: 'LEAVE_QUEUE' });
+        });
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           CHAT SEND
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function sendChat() {
+            const msg = $('chatInput').value.trim();
+            if (!msg) return;
+            if (isRestricted) {
+                setChatStatus('Chat is restricted. AI violation in effect.', true);
+                return;
+            }
+            if (!session) { log('Not authenticated.', 'error'); return; }
+
+            log(`→ SEND_MESSAGE  "${msg.slice(0, 60)}"`, 'system');
+            send({ action: 'SEND_MESSAGE', message: msg });
+            $('chatInput').value = '';
+        }
+
+        $('btnSendChat').addEventListener('click', sendChat);
+        $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           LEADERBOARD
+        ═══════════════════════════════════════════════════════════════════════════ */
+        async function loadLeaderboard() {
+            const tbody = $('leaderboardBody');
+            tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);font-family:var(--mono);font-size:11px;padding:6px 0">Loading…</td></tr>`;
+            try {
+                const res = await fetch(`${API}/api/players/leaderboard?limit=10`);
+                const rows = await res.json();
+                tbody.innerHTML = rows.map(r =>
+                    `<tr>
+            <td class="rank-num">${r.rank}</td>
+            <td>${escHtml(r.username)}</td>
+            <td class="rank-mmr">${r.mmr}</td>
+            <td class="rank-status st-${r.status}">${r.status}</td>
+          </tr>`
+                ).join('');
+                log(`Leaderboard loaded (${rows.length} players)`, 'system');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color:var(--red);font-family:var(--mono);font-size:11px">Failed to load</td></tr>`;
+                log(`Leaderboard error: ${err.message}`, 'error');
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           UTILS
+        ═══════════════════════════════════════════════════════════════════════════ */
+        function escHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           BOOT
+        ═══════════════════════════════════════════════════════════════════════════ */
+        log('NTE Matchmaker Tester Panel — v2.0 with AI Safety Filter', 'system');
+        log(`API: ${API}  |  WS: ${WS}`, 'system');
+        log('Enter a username and MMR, then click "Login & Connect".', 'system');
+        log('Try sending "aimbot" or "hack" in chat to trigger the AI filter.', 'ai');
+    </script>
+</body>
+</html>
